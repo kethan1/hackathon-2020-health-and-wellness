@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Health and Wellness</title>
+    <link rel="icon" href="/static/favicon.png" type="image/png"/>
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script> 
+</head>
+<body>
+    <div style="text-align: center" class="row">
+        <div class="col s12">
+          <ul class="tabs">
+            <li class="tab col s3"><a href="#test1">Food Recalls</a></li>
+            <li class="tab col s3"><a href="#test2">Air Quality</a></li>
+            <li class="tab col s3"><a href="#test3">Earthquakes</a></li>
+          </ul>
+        </div>
+        <div id="test1" class="col s12">
+            <form action="/" method="POST">
+                <div class="row">
+                    <input value="date_change" name="type" type="hidden">
+                    <div class="col s6">
+                        <input id="start_date" placeholder="Start Date" name="start_date" type="text" class="datepicker no-autoinit">
+                    </div>
+                    <div class="col s6">
+                        <input id="end_date" placeholder="End Date" name="end_date" type="text" class="datepicker no-autoinit">
+                    </div>
+                    <div style="text-align: center;" class="col s12">
+                        <button type="submit" style="text-align: center; width: 75%;" class="waves-effect waves-light btn">Find</button>
+                    </div>
+                </div>
+            </form>
+            <table class="striped">
+                <thead>
+                    <tr>
+                        <th style="text-align: center;">Product</th>
+                        <th style="text-align: center;">Company</th>
+                        <th style="text-align: center;">Distribution</th>
+                        <th style="text-align: center;">Reason for Recall</th>
+                        <th style="text-align: center;">Country</th>
+                        <th style="text-align: center;">Product Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in food_recalls["results"] %}
+                        <tr>
+                            <td>{{ result["product_description"] }}</td>
+                            <td>{{ result["recalling_firm"] }}</td>
+                            <td>{{ result["distribution_pattern"] }}</td>
+                            <td>{{ result["reason_for_recall"] }}</td>
+                            <td>{{ result["country"] }}</td>
+                            <td>{{ result["product_type"] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="test2" class="col s12">
+            <style>
+                .circle {
+                    justify-content: center;
+                    align-items: center;
+                    border-radius: 100%;
+                    width: 40vw;
+                    height: 40vw;
+                    text-align: center;
+                    display: flex;
+                    font-size: 20px;
+                    color: #fff;
+                }
+            </style>
+            <script>
+                function DisplayData() {
+                    zipCodeInput = document.getElementById("ZipCode");
+                    resultsDiv = document.getElementById("resultsShow");
+                    fetch("/api/air_quality", {
+                        headers : { "content-type" : "application/json; charset=UTF-8"},
+                        body : JSON.stringify({"zipCode": zipCodeInput.value}),
+                        method : "POST",
+                        mode : "cors"
+                    })
+                    .then(async (response) => {
+                        responseInJson_all = await response.json();
+                        if (responseInJson_all["worked"]) {
+                            responseInJson = responseInJson_all["air_quality"]
+                            if (responseInJson["Number"] == 1) {
+                                x = `<div class="circle" style="background-color: #00E400; text-align: center;">${responseInJson["Name"]}</div>`
+                            } else if (responseInJson["Number"] == 2) {
+                                x =  `<div class="circle" style="background-color: #FFFF00; text-align: center;">${responseInJson["Name"]}</div>`
+                            } else if (responseInJson["Number"] == 3) {
+                                x = `<div class="circle" style="background-color: #FF7E00; text-align: center;">${responseInJson["Name"]}</div>`
+                            } else if (responseInJson["Number"] == 4) {
+                                x = `<div class="circle" style="background-color: #FF0000; text-align: center;">${responseInJson["Name"]}</div>`
+                            } else if (responseInJson["Number"] == 5) {
+                                x = `<div class="circle" style="background-color: #7a0021; text-align: center;">${responseInJson["Name"]}</div>`
+                            } else if (responseInJson["Number"] == 6) {
+                                x = `<div class="circle" style="background-color: #420012; text-align: center;">${responseInJson["Name"]}</div>`
+                            } else {
+                                x = `<div class="circle" style="background-color: red; text-align: center;">Error</div>`
+                            }
+                            resultsDiv.innerHTML = `
+                            <div class="row">
+                                <div class="col s6" style="color: black;">
+                                    ${x}
+                                </div>
+                                <div class="col s6">
+                                    <p>Zip Code: ${zipCodeInput.value}</p>
+                                    <p>AQI: ${responseInJson_all["full_air_quality"]["AQI"]}</p>
+                                    <img src="/static/AQI Scale.jpg">
+                                </div>
+                            </div>`;
+                        } else { resultsDiv.innerHTML = "Could not find zip code." }
+                        zipCodeInput.value = "";
+                    })};
+            </script>
+            <div class="row">
+                <div class="input-field col s10">
+                    <input id="ZipCode" type="number">
+                    <label for="Zip Code">Zip Code</label>
+                </div>
+                <div class="input-field col s2">
+                    <button onclick="DisplayData()" class="waves-effect waves-light btn">Get Air Quality</button>
+                </div>
+            </div>
+            <div id="resultsShow" style="text-align: center;"></div>
+        </div>
+        <div id="test3" class="col s12">
+            <table class="striped">
+                <thead>
+                    <tr>
+                        <th style="text-align: center;">Location</th>
+                        <th style="text-align: center;">Magnitude</th>
+                        <th style="text-align: center;">Time</th>
+                        <th style="text-align: center;">Url</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for earthquake in earthquakes_reported["earthquakes"] %}
+                        <tr>
+                            <td>{{ earthquake.location_description }}</td>
+                            <td>{{ earthquake.magnitude }}</td>
+                            <td>{{ epoch_to_time(earthquake["time"]) }}</td>
+                            <td><a  target="_blank" href="{{ earthquake.url }}">{{ earthquake.url }}</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        M.AutoInit();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var elems = document.querySelectorAll('#start_date');
+            var instances = M.Datepicker.init(elems, 
+                {
+                    "defaultDate": new Date("{{ start_date_food }}"), 
+                    "setDefaultDate": true
+                }
+            );
+            var elems2 = document.querySelectorAll('#end_date');
+            var instances2 = M.Datepicker.init(elems2, 
+                {
+                    "defaultDate": new Date("{{ end_date_food }}"), 
+                    "setDefaultDate": true
+                }
+            );
+        });
+    </script>
+</body>
+</html>
